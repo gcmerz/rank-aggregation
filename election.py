@@ -1,23 +1,68 @@
 import numpy as np
-from sklearn.cluster import AgglomerativeClustering
-from util import spearman_footrule_matrix
+from sklearn.cluster import AgglomerativeClustering, KMeans
+from util import spearman_footrule, spearman_footrule_matrix, kendalltau_matrix
+from nltk.cluster import KMeansClusterer
 
 class Election(object):
-	def __init__(self, num_clusters=2):
-		self.__generate_votes()
-		self.__cluster_votes(num_clusters)
+	def __init__(self, votes=None, num_clusters=2, region_ids=None, kmeans=False):
+		if votes is None:
+			self.__generate_votes()
+		else:
+			self.votes = votes
+
+		if region_ids is not None:
+			self.region_ids = region_ids
+
+		self.__cluster_votes(num_clusters, kmeans)
 
 	def __generate_votes(self):
 		self.votes = np.array([np.random.permutation(4) for _ in range(100)])
 
-	def __cluster_votes(self, num_clusters):
-		AC = AgglomerativeClustering(n_clusters=num_clusters, affinity=spearman_footrule_matrix, linkage="complete")
-		cluster_assignments = AC.fit_predict(self.votes)
-		self.vote_clusters = []
-		for i in range(num_clusters):
-			idx = np.array([a for a, b in enumerate(cluster_assignments) if b==i])
-			self.vote_clusters.append(self.votes[idx])
+	def __cluster_votes(self, num_clusters, kmeans=False):
+		if not kmeans:
+			C = AgglomerativeClustering(n_clusters=num_clusters, affinity=kendalltau_matrix, linkage="complete")
+			cluster_assignments = C.fit_predict(self.votes)
+			self.vote_clusters = []
+			for i in range(num_clusters):
+				idx = np.array([a for a, b in enumerate(cluster_assignments) if b==i])
+				if self.region_ids is None:
+					self.vote_clusters.append(self.votes[idx])
+				else:
+					self.vote_clusters.append((self.votes[idx], np.array(self.region_ids)[idx]))
+		else:
+			C = KMeansClusterer(num_means=2, distance=spearman_footrule)
+			C.cluster_vectorspace(self.votes)
+			cluster_assignments = [C.classify_vectorspace(v) for v in self.votes]
+			self.vote_clusters = []
+			for i in range(num_clusters):
+				idx = np.array([a for a, b in enumerate(cluster_assignments) if b==i])
+				if self.region_ids is None:
+					self.vote_clusters.append(self.votes[idx])
+				else:
+					self.vote_clusters.append((self.votes[idx], np.array(self.region_ids)[idx]))
 
-E = Election()
+votes = []
+with open('sushi3-2016/sushi3a.5000.10.order') as f:
+	lines = f.readlines()
+	for line in lines[1:]:
+		votes.append(np.array(map(int, line.rstrip('\n').split(' ')[2:])))
+
+r_ids = []
+with open('sushi3-2016/sushi3.udata') as f:
+	lines = f.readlines()
+	for line in lines:
+		r_ids.append(map(int, line.split())[5])
+
+votes = np.array(votes)
+
+n = 1000
+props = []
+E = Election(num_clusters=2, votes=votes[:n], region_ids=r_ids[:n], kmeans=False)
 for cluster in E.vote_clusters:
-	print cluster
+	props.append(np.array([float((cluster[1] == i).sum())/float(len(cluster[1])) for i in range(6)]))
+	print len(cluster[0]), props[-1]
+	for i in cluster[0][:10]:
+		print i
+	print "----"
+
+print np.linalg.norm(props[0] - props[1])
