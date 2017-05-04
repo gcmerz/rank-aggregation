@@ -20,7 +20,7 @@ class Election(object):
 
 	def __cluster_votes(self, num_clusters, kmeans=False):
 		if not kmeans:
-			C = AgglomerativeClustering(n_clusters=num_clusters, affinity=kendalltau_matrix, linkage="complete")
+			C = AgglomerativeClustering(n_clusters=num_clusters, affinity=spearman_footrule_matrix, linkage="complete")
 			cluster_assignments = C.fit_predict(self.votes)
 			self.vote_clusters = []
 			for i in range(num_clusters):
@@ -57,9 +57,11 @@ votes = np.array(votes)
 
 n = 1000
 props = []
+total_prop = np.array([float((np.array(r_ids[:n]) == i).sum())/float(n) for i in range(11)])
 E = Election(num_clusters=2, votes=votes[:n], region_ids=r_ids[:n], kmeans=False)
+
 for cluster in E.vote_clusters:
-	props.append(np.array([float((cluster[1] == i).sum())/float(len(cluster[1])) for i in range(6)]))
+	props.append(np.array([(float((cluster[1] == i).sum())/float(len(cluster[1])))/total_prop[i] for i in range(11)]))
 	print len(cluster[0]), props[-1]
 	for i in cluster[0][:10]:
 		print i
