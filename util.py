@@ -2,9 +2,9 @@ import numpy as np
 from itertools import combinations, permutations
 
 def spearman_footrule(x, y):
-	num_items = 100
-	delta = np.full(num_items, 10)
-	pi = np.full(num_items, 10)
+	num_items = len(x)
+	delta = np.arange(num_items)
+	pi = np.arange(num_items)
 	for i in range(len(x)):
 		delta[x[i]] = i
 		pi[y[i]] = i

@@ -42,7 +42,7 @@ class Election(object):
 					self.vote_clusters.append((self.votes[idx], np.array(self.region_ids)[idx]))
 
 votes = []
-with open('sushi3-2016/sushi3b.5000.10.order') as f:
+with open('sushi3-2016/sushi3a.5000.10.order') as f:
 	lines = f.readlines()
 	for line in lines[1:]:
 		votes.append(np.array(map(int, line.rstrip('\n').split(' ')[2:])))
@@ -58,13 +58,13 @@ with open('sushi3-2016/sushi3.udata') as f:
 votes = np.array(votes)
 r_ids = np.array(r_ids)
 
-votes_same = np.array([votes[i] for i in range(len(votes)) if same[i]])
-r_ids_same = np.array([r_ids[i] for i in range(len(votes)) if same[i]])
+votes_same = np.array([votes[i] for i in range(len(votes)) if not same[i]])
+r_ids_same = np.array([r_ids[i] for i in range(len(votes)) if not same[i]])
 
-n = 800
+n = 1792
 props = []
-num_each = np.array([float((r_ids[:n] == i).sum()) for i in range(11)])
-E = Election(num_clusters=2, votes=votes[:n], region_ids=r_ids[:n], kmeans=False)
+num_each = np.array([float((r_ids_same[:n] == i).sum()) for i in range(11)])
+E = Election(num_clusters=2, votes=votes_same[:n], region_ids=r_ids_same[:n], kmeans=False)
 
 for cluster in E.vote_clusters:
 	props.append(np.array([(float((cluster[1] == i).sum())/float(len(cluster[1]))) * n for i in range(11)]))
