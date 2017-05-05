@@ -2,13 +2,13 @@ import numpy as np
 from itertools import combinations, permutations
 
 def spearman_footrule(x, y):
-	num_items = len(x)
-	delta = np.arange(num_items)
-	pi = np.arange(num_items)
-	for i in range(num_items):
+	num_items = 100
+	delta = np.full(num_items, 10)
+	pi = np.full(num_items, 10)
+	for i in range(len(x)):
 		delta[x[i]] = i
 		pi[y[i]] = i
-	return np.linalg.norm((delta - pi) ** 3, ord=1)
+	return np.linalg.norm((delta - pi), ord=3)
 
 def kendall_tau(x, y):
     tau = 0

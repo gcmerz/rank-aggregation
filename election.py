@@ -42,7 +42,7 @@ class Election(object):
 					self.vote_clusters.append((self.votes[idx], np.array(self.region_ids)[idx]))
 
 votes = []
-with open('sushi3-2016/sushi3a.5000.10.order') as f:
+with open('sushi3-2016/sushi3b.5000.10.order') as f:
 	lines = f.readlines()
 	for line in lines[1:]:
 		votes.append(np.array(map(int, line.rstrip('\n').split(' ')[2:])))
@@ -61,7 +61,7 @@ r_ids = np.array(r_ids)
 votes_same = np.array([votes[i] for i in range(len(votes)) if same[i]])
 r_ids_same = np.array([r_ids[i] for i in range(len(votes)) if same[i]])
 
-n = 1792
+n = 800
 props = []
 num_each = np.array([float((r_ids[:n] == i).sum()) for i in range(11)])
 E = Election(num_clusters=2, votes=votes[:n], region_ids=r_ids[:n], kmeans=False)
@@ -76,3 +76,12 @@ for cluster in E.vote_clusters:
 print np.linalg.norm(props[0] - props[1], ord=1) / float(n) # score of 1 is perfect separation, 0 means clusters identical
 diff = [np.abs(props[0][i] - props[1][i]) for i in range(len(props[0])) if not i == 3]
 print np.linalg.norm(diff, ord=1) / (float(n) - num_each[3]) # does not consider most populous region
+num_east = [0,0]
+num_west = [0,0]
+for i in range(2):
+	for j in range(11):
+		if j < 5:
+			num_east[i] += props[i][j]
+		else:
+			num_west[i] += props[i][j]
+print num_east, num_west
