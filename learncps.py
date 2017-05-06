@@ -30,30 +30,31 @@ def find_optimal_theta(pi, sigma_set, dist=quick_src):
     theta = np.ones(M)
     
     def expon(theta_est, k, j): 
-        return np.exp(sum([theta_est[m] * dist(k, j, pi, sigma_set[m]) for m in xrange(M)]))
+        return np.exp(-1. * sum([theta_est[m] * dist(k, j, pi, sigma_set[m]) for m in xrange(M)]))
     
     def gradient(theta_est, theta_est_idx):
-        total = 0 
+        total = 0.
         for k in xrange(n): 
-            val_one = -1 * dist(k, k, pi, sigma_set[theta_est_idx])
-            numerator = 0
-            denominator = 0
-            for j in xrange(k, n): 
-                numerator += dist(k, j, pi, sigma_set[theta_est_idx]) * expon(theta_est, k, j)
-                denominator += expon(theta_est, k, j)
-            total += val_one + (numerator / denominator)
-        return 0.75*total 
-                        
-    # let's just do one hundred iteratons to see if we can get anything close to convergence
-    # print ([gradient(theta, i) for i in xrange(M)])
+            numerator = sum([dist(k, j, pi, sigma_set[theta_est_idx]) * expon(theta_est, k, j) for j in xrange(k, n)])
+            denominator = sum([expon(theta_est, k, j) for j in xrange(k, n)])
+            total += (numerator / denominator) - dist(k, k, pi, sigma_set[theta_est_idx])
+        return total
+
+    def loss(theta_est):
+    	loss = 0.
+    	for k in range(n):
+    		loss += -1 * sum([dist(k, k, pi, sigma_set[m]) for m in xrange(M)])
+    		loss += -1 * np.log(sum([expon(theta_est, k, j) for j in xrange(k, n)]))
+        return loss
+
     theta_one = np.zeros(M)
-    i = 0
-    while not(np.isclose(theta, theta_one, rtol=1e-08).all()) and (i < 1000):
+    ctr = 0
+    while not(np.isclose(theta, theta_one, rtol=1e-08).all()) and (ctr < 100000):
         # print [gradient(theta, i) for i in xrange(M)]
-        i += 1
+        ctr += 1
         theta_one = theta 
-        theta = theta - (([gradient(theta, i) for i in xrange(M)]))
-        print theta
+        theta = theta + [gradient(theta, i) for i in xrange(M)]
+        print loss(theta) > loss(theta_one), loss(theta)
     return theta 
 
 find_optimal_theta([1,2,3], [[2,1,3], [2,3,1]], quick_src) 
