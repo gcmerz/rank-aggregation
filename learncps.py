@@ -1,5 +1,6 @@
 # coding: utf-8 # In[87]: 
 import numpy as np 
+import matplotlib.pyplot as plt
 
 def quick_kendalltau(k, l, pi, sigma): 
     ''' computes quick kendall_tau distances using method described in paper '''
@@ -24,7 +25,7 @@ def quick_src(k, l, pi, sigma):
 			temporary_count += (sigma.index(pi[i]) - j) ** 2
 	return count + (1. / float(n - k)) * temporary_count
 
-def find_optimal_theta(pi, sigma_set, dist=quick_src): 
+def find_optimal_theta(pi, sigma_set, lr = 1.0, dist=quick_src): 
     n = len(pi)
     M = len(sigma_set)
     theta = np.ones(M)
@@ -43,21 +44,27 @@ def find_optimal_theta(pi, sigma_set, dist=quick_src):
     def loss(theta_est):
     	loss = 0.
     	for k in range(n):
-    		loss += -1 * sum([dist(k, k, pi, sigma_set[m]) for m in xrange(M)])
-    		loss += -1 * np.log(sum([expon(theta_est, k, j) for j in xrange(k, n)]))
+    		loss -= sum([theta_est[m] * dist(k, k, pi, sigma_set[m]) for m in xrange(M)])
+    		loss -= np.log(sum([expon(theta_est, k, j) for j in xrange(k, n)]))
         return loss
 
     theta_one = np.zeros(M)
+    loss_array = [loss(theta_one)]
     ctr = 0
-    while not(np.isclose(theta, theta_one, rtol=1e-08).all()) and (ctr < 100000):
+    while not(np.isclose(theta, theta_one, rtol=1e-08).all()) and (ctr < 100):
         # print [gradient(theta, i) for i in xrange(M)]
         ctr += 1
         theta_one = theta 
-        theta = theta + [gradient(theta, i) for i in xrange(M)]
+        theta = theta + lr * np.array([gradient(theta, i) for i in xrange(M)])
         print loss(theta) > loss(theta_one), loss(theta)
-    return theta 
+        loss_array.append(loss(theta))
+    return theta, loss_array 
 
-find_optimal_theta([1,2,3], [[2,1,3], [2,3,1]], quick_src) 
+for lr in [0.01, 0.1, 0.2, 0.5, 0.75, 1.0]:
+    theta, la = find_optimal_theta([1,2,3], [[2,1,3], [2,3,1]], lr, quick_src)
+    plt.plot(la)
+    plt.show()
+    plt.savefig(str(lr) + ".png")
 
 def sequential_inference(theta, sigma, dist=quick_src): 
     pi = []
