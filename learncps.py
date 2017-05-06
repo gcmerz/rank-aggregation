@@ -1,6 +1,7 @@
-# coding: utf-8 # In[87]: 
-import numpy as np 
-import matplotlib.pyplot as plt
+# coding: utf-8
+import numpy as np
+from election import Election
+# import matplotlib.pyplot as plt
 
 def quick_kendalltau(k, l, pi, sigma): 
     ''' computes quick kendall_tau distances using method described in paper '''
@@ -25,7 +26,7 @@ def quick_src(k, l, pi, sigma):
 			temporary_count += (sigma.index(pi[i]) - j) ** 2
 	return count + (1. / float(n - k)) * temporary_count
 
-def find_optimal_theta(pi, sigma_set, lr = 1.0, dist=quick_src): 
+def find_optimal_theta(pi, sigma_set, lr=1.0, dist=quick_src): 
     n = len(pi)
     M = len(sigma_set)
     theta = np.ones(M)
@@ -51,20 +52,18 @@ def find_optimal_theta(pi, sigma_set, lr = 1.0, dist=quick_src):
     theta_one = np.zeros(M)
     loss_array = [loss(theta_one)]
     ctr = 0
-    while not(np.isclose(theta, theta_one, rtol=1e-08).all()) and (ctr < 100):
-        # print [gradient(theta, i) for i in xrange(M)]
+    while not(np.isclose(theta, theta_one, rtol=1e-08).all()) and (ctr < 100000):
         ctr += 1
         theta_one = theta 
         theta = theta + lr * np.array([gradient(theta, i) for i in xrange(M)])
-        print loss(theta) > loss(theta_one), loss(theta)
         loss_array.append(loss(theta))
     return theta, loss_array 
 
-for lr in [0.01, 0.1, 0.2, 0.5, 0.75, 1.0]:
-    theta, la = find_optimal_theta([1,2,3], [[2,1,3], [2,3,1]], lr, quick_src)
-    plt.plot(la)
-    plt.show()
-    plt.savefig(str(lr) + ".png")
+# theta, la = find_optimal_theta([1,2,3], [[2,1,3], [2,3,1]], 1.0, quick_src)
+# print la[-1]
+# plt.plot(la)
+# plt.show()
+# plt.savefig(str(lr) + ".png")
 
 def sequential_inference(theta, sigma, dist=quick_src): 
     pi = []
@@ -80,4 +79,18 @@ def sequential_inference(theta, sigma, dist=quick_src):
         items.remove(val)
     return pi
 
-sequential_inference([1,2,1,2], [[1,2,3,4,5],[1,2,4,3,5], [1,5,4,3,2], [1,2,3,4,5]])
+# sequential_inference([1,2,1,2], [[1,2,3,4,5],[1,2,4,3,5], [1,5,4,3,2], [1,2,3,4,5]])
+
+# read in votes from dataset
+votes = []
+with open('sushi3-2016/sushi3a.5000.10.order') as f:
+    lines = f.readlines()
+    for line in lines[1:]:
+        votes.append(np.array(map(int, line.rstrip('\n').split(' ')[2:])))
+votes = np.array(votes)
+
+n = 200
+E = Election(num_clusters=2, votes=votes[:n])
+for pi, cluster in zip(E.cluster_centers, E.vote_clusters):
+    theta, la = find_optimal_theta(pi, cluster)
+    print theta, la[-1]
