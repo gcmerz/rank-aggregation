@@ -9,12 +9,13 @@ class Election(object):
 		else:
 			self.votes = votes
 
-		if region_ids is not None:
-			self.region_ids = region_ids
+		self.region_ids = region_ids
 
 		self.affinity = affinity  # see util for possible affinity functions
 
 		self.__cluster_votes(num_clusters)
+
+		self.__find_cluster_centers()
 
 	def __generate_votes(self):
 		'''for simulations'''
