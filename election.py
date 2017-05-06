@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.cluster import AgglomerativeClustering, KMeans
-from util import spearman_footrule, spearman_footrule_matrix, kendalltau_matrix
+from util import spearman_footrule, spearman_footrule_matrix, kendalltau_matrix, spearman_rank_correlation_matrix
 from nltk.cluster import KMeansClusterer
 
 class Election(object):
@@ -20,7 +20,7 @@ class Election(object):
 
 	def __cluster_votes(self, num_clusters, kmeans=False):
 		if not kmeans:
-			C = AgglomerativeClustering(n_clusters=num_clusters, affinity=spearman_footrule_matrix, linkage="complete")
+			C = AgglomerativeClustering(n_clusters=num_clusters, affinity=spearman_rank_correlation_matrix, linkage="complete")
 			cluster_assignments = C.fit_predict(self.votes)
 			self.vote_clusters = []
 			for i in range(num_clusters):

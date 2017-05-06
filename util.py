@@ -8,7 +8,16 @@ def spearman_footrule(x, y):
 	for i in range(len(x)):
 		delta[x[i]] = i
 		pi[y[i]] = i
-	return np.linalg.norm((delta - pi), ord=3)
+	return np.linalg.norm((delta - pi), ord=1)
+
+def spearman_rank_correlation(x, y):
+	num_items = len(x)
+	delta = np.arange(num_items)
+	pi = np.arange(num_items)
+	for i in range(len(x)):
+		delta[x[i]] = i
+		pi[y[i]] = i
+	return np.linalg.norm((delta - pi) ** 2, ord=1)
 
 def kendall_tau(x, y):
     tau = 0
@@ -20,6 +29,9 @@ def kendall_tau(x, y):
 
 def spearman_footrule_matrix(X):
 	return np.array([[spearman_footrule(a, b) for a in X] for b in X])
+
+def spearman_rank_correlation_matrix(X):
+	return np.array([[spearman_rank_correlation(a, b) for a in X] for b in X])
 
 def kendalltau_matrix(X):
 	return np.array([[kendall_tau(a, b) for a in X] for b in X])
