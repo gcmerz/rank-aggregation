@@ -5,9 +5,9 @@ from util import read_sushi_votes
 votes, r_ids = read_sushi_votes(same=True)
 
 n = 500
-nc = 4
+nc = 2
 props = []
-num = [[]] * 10
+num = [[] for _ in range(10)]
 num_each = np.array([float((r_ids[:n] == i).sum()) for i in range(11)])
 
 E = Election(num_clusters=nc, votes=votes[:n], region_ids=r_ids[:n])
@@ -16,7 +16,7 @@ for cluster in E.vote_clusters:
 	print len(cluster[0]), props[-1]
 	print "----"
 
-	counts = np.zeros((10, 11))
+	counts = np.zeros((10, 10))
 
 	for ranking in cluster[0]:
 		for i in range(10):
@@ -34,10 +34,11 @@ if nc == 2:
 
 num_east = [np.sum([props[i][j] for j in range(5)]) for i in range(nc)]
 num_west = [np.sum([props[i][j] for j in range(5, 11)]) for i in range(nc)]
+print (max(num_east) - min(num_east)) / float(n)
 print num_east, num_west
 print "----"
-for i in range(11):
+for i in range(10):
 	print [num[0][j][i] for j in range(nc)]
 print "----"
-for i in range(11):
+for i in range(10):
 	print [num[-1][j][i] for j in range(nc)]
