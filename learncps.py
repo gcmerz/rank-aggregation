@@ -1,6 +1,8 @@
 # coding: utf-8
 import numpy as np
 from election import Election
+import time
+from multiprocessing import Pool
 # import matplotlib.pyplot as plt
 
 def quick_kendalltau(k, l, pi, sigma): 
@@ -56,8 +58,19 @@ def find_optimal_theta(pi, sigma_set, lr=1.0, dist=quick_src, iterations=1000, v
     ctr = 0
     while ctr < iterations and loss_array[-1] < -1e-5:
         if verbose:
-            print loss_array[-1]
-        theta = theta + lr * np.array([gradient(theta, i) for i in xrange(M)])
+            print ctr, loss_array[-1]
+        lr_ = lr
+        if loss_array[-1] < -0.1:
+            lr_ = 0.001
+        elif loss_array[-1] < -0.01:
+            lr_ = 0.04
+        elif loss_array[-1] < -0.001:
+            lr_ = 0.4
+        elif loss_array[-1] < -0.0001:
+            lr_ = 4.
+        elif loss_array[-1] < -0.00001:
+            lr_ = 40.
+        theta = theta + lr_ * np.array([gradient(theta, i) for i in xrange(M)])
         loss_array.append(loss(theta))
         ctr += 1
     return theta, loss_array 
@@ -92,9 +105,13 @@ with open('sushi3-2016/sushi3a.5000.10.order') as f:
         votes.append(np.array(map(int, line.rstrip('\n').split(' ')[2:])))
 votes = np.array(votes)
 
-n = 20
-E = Election(num_clusters=2, votes=votes[:n])
-for pi, cluster in zip(E.cluster_centers, E.vote_clusters):
-    for lr in [0.001, 0.0025, 0.003, .0035]:
-        theta, la = find_optimal_theta(pi, cluster, lr=lr, iterations=10)
-        print lr, la[-1]
+def f(x):
+    pi, cluster = x
+    find_optimal_theta(pi, cluster, lr=4., iterations=10)
+
+n = 40
+start = time.time()
+E = Election(num_clusters=3, votes=votes[:n])
+pool = Pool(3)
+pool.map(f, zip(E.cluster_centers, E.vote_clusters))
+print time.time() - start

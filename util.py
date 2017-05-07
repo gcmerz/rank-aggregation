@@ -35,3 +35,11 @@ def spearman_rank_correlation_matrix(X):
 
 def kendalltau_matrix(X):
 	return np.array([[kendall_tau(a, b) for a in X] for b in X])
+
+def read_votes(fn):
+	votes = []
+	with open(fn) as f:
+		lines = f.readlines()
+		for line in lines[1:]:
+			votes.append(np.array(map(int, line.rstrip('\n').split(' ')[2:])))
+	return np.array(votes)
