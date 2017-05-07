@@ -6,18 +6,6 @@ from multiprocessing import Pool
 from util import read_sushi_votes
 # import matplotlib.pyplot as plt
 
-def quick_kendalltau(k, l, pi, sigma): 
-    ''' computes quick kendall_tau distances using method described in paper '''
-    n = len(pi)
-    sigma = list(sigma)
-    count = .25 * (n - l) *(n - l - 1)
-    for i in xrange(k): 
-        for j in xrange(i+1, n): 
-            count += int(sigma.index(pi[i]) > sigma.index(pi[j]))
-    for j in xrange(l + 1, n): 
-        count += int(sigma.index(pi[l]) > sigma.index(pi[j]))
-    return count
-
 def quick_src(k, l, pi, sigma):
     n = len(pi)
     sigma = list(sigma)
