@@ -7,7 +7,13 @@ from util import read_sushi_votes
 # import matplotlib.pyplot as plt
 
 def quick_kendalltau(k, l, pi, sigma): 
-    ''' computes quick kendall_tau distances using method described in paper '''
+    ''' 
+        function: quick_kendalltau 
+        params: k (int), l (int), pi (iterable, permutation of ints 1 -- n), 
+            sigma (np.array, permutation of ints 1-- n)
+        returns: quick computation of kendall tau coset-distance as
+            outlined in "A New Probaiblistic Metric for Rank Aggregation"
+    '''
     n = len(pi)
     sigma = list(sigma)
     count = .25 * (n - l) *(n - l - 1)
@@ -19,6 +25,13 @@ def quick_kendalltau(k, l, pi, sigma):
     return count
 
 def quick_src(k, l, pi, sigma):
+    ''' 
+        function: quick_src
+        params: k (int), l (int), pi (iterable, permutation of ints 1 -- n), 
+            sigma (np.array, permutation of ints 1-- n)
+        returns: quick computation of spearman's rank coorelation coset-distance 
+            as outlined in "A New Probaiblistic Metric for Rank Aggregation"
+    '''
     n = len(pi)
     sigma = list(sigma)
     count = 0.
@@ -32,28 +45,45 @@ def quick_src(k, l, pi, sigma):
     return count + (1. / float(n - k)) * temporary_count
 
 def find_optimal_theta(pi, sigma_set, lr=1.0, dist=quick_src, iterations=1000, verbose=False): 
+    '''
+        function: find_optimal_theta
+            given a target permutation and a set of votes, uses MLE / gradient ascent to 
+            find the optimal parameters theta for the CPS model
+        params: pi (iterable, permutation of ints 1--n)
+                sigma_set (np.array of np.arrays, each inner np.array is a permutation 
+                        of ints 1--n, corresponds to each users votes)
+                lr (learning rate for gradient ascent, float, inbetween 0 and 1)
+                iterations (int, number of iterations to perform for gradient ascent)
+                verbose (bool, if True prints statements detailing progress)
+        returns: tuple of optimal theta (np.array), and final loss (float)
+    '''
     n = len(pi)
     M = len(sigma_set)
     
     def expon(theta_est, k, j): 
+        # helper function for exponential of coset distances, which is called often
         return np.exp(-1. * sum([theta_est[m] * dist(k, j, pi, sigma_set[m]) for m in xrange(M)]))
     
     def gradient(theta_est, theta_est_idx):
+        # calculates the gradient of the estimated theta 
+        # (theta_est) and a certain index (theta_est_idx)
         total = 0.
         for k in xrange(n): 
-            numerator = sum([dist(k, j, pi, sigma_set[theta_est_idx]) * expon(theta_est, k, j) for j in xrange(k, n)])
+            numerator = sum([dist(k, j, pi, sigma_set[theta_est_idx]) * 
+                expon(theta_est, k, j) for j in xrange(k, n)])
             denominator = sum([expon(theta_est, k, j) for j in xrange(k, n)])
             total += (numerator / denominator) - dist(k, k, pi, sigma_set[theta_est_idx])
         return total
 
     def loss(theta_est):
+        # calculates the loss for an estimated theta
         loss = 0.
         for k in range(n):
             loss -= sum([theta_est[m] * dist(k, k, pi, sigma_set[m]) for m in xrange(M)])
             loss -= np.log(sum([expon(theta_est, k, j) for j in xrange(k, n)]))
         return loss
 
-    # gradient ascent
+    # gradient ascent, continuously modify learning rate to speed up convergence
     theta = np.zeros(M)
     loss_array = [loss(theta)]
     ctr = 0
@@ -76,13 +106,18 @@ def find_optimal_theta(pi, sigma_set, lr=1.0, dist=quick_src, iterations=1000, v
         ctr += 1
     return theta, loss_array 
 
-# theta, la = find_optimal_theta([1,2,3], [[2,1,3], [2,3,1]], 1.0, quick_src, iterations=100, verbose=True)
-# print la[-1]
-# plt.plot(la)
-# plt.show()
-# plt.savefig(str(lr) + ".png")
-
 def sequential_inference(theta, sigma, elements=range(10), dist=quick_src): 
+    '''
+        function: sequential_inference 
+            given dispersion parameters theta and a set of votes sigma, 
+            infer the target parameter of the CPS model pi 
+        params: theta: float list of dispersion parameters of len(sigma)
+                sigma: np.array of np.array of permutations 1--n
+                elements: number of elements in the rankings (just in case rankings are weirdly
+                    formatted)
+                dist: the distance metric to use
+        returns: pi, a list of integers that is a permutation of 1--(len(sigma[0]) - 1)
+    '''
     pi = []
     M = len(theta)
     n = len(sigma[0])
@@ -100,21 +135,19 @@ def sequential_inference(theta, sigma, elements=range(10), dist=quick_src):
         
     return pi
 
-# theta, _ = find_optimal_theta([1,4,2,3,5], [[1,2,3,4,5],[4,2,1,3,5],[1,5,4,3,2],[1,2,3,4,5]], lr=4., iterations=4000, verbose=True)
-# print "SI: ", sequential_inference(theta, [[1,2,3,4,5],[1,2,4,3,5],[1,5,4,3,2],[1,2,3,4,5]], elements=[1,2,3,4,5])
+if __name__ == '__main__': 
+    votes, _ = read_sushi_votes(same=True)
 
-votes, _ = read_sushi_votes(same=True)
+    def f(x):
+        pi, cluster = x
+        theta, la = find_optimal_theta(pi, cluster, lr=4., iterations=200)
+        pi_pred = sequential_inference(theta, cluster)
+        return pi, pi_pred
 
-def f(x):
-    pi, cluster = x
-    theta, la = find_optimal_theta(pi, cluster, lr=4., iterations=200)
-    pi_pred = sequential_inference(theta, cluster)
-    return pi, pi_pred
-
-n = 20
-nc = 2
-start = time.time()
-E = Election(num_clusters=nc, votes=votes[:n])
-pool = Pool(nc)
-print pool.map(f, zip(E.cluster_centers, E.vote_clusters))
-print time.time() - start
+    n = 20
+    nc = 2
+    start = time.time()
+    E = Election(num_clusters=nc, votes=votes[:n])
+    pool = Pool(nc)
+    print pool.map(f, zip(E.cluster_centers, E.vote_clusters))
+    print time.time() - start
