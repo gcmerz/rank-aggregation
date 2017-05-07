@@ -41,4 +41,3 @@ for i in range(11):
 print "----"
 for i in range(11):
 	print [num[-1][j][i] for j in range(nc)]
-
