@@ -6,6 +6,7 @@ from multiprocessing import Pool
 from util import read_sushi_votes
 # import matplotlib.pyplot as plt
 
+
 def quick_kendalltau(k, l, pi, sigma): 
     ''' 
         function: quick_kendalltau 
