@@ -189,4 +189,3 @@ if __name__ == '__main__':
     pool = Pool(num_clusters)
     pool.map(f, zip(E.cluster_centers, E.vote_clusters))
     print(time.time() - start)
-    
