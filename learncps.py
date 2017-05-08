@@ -90,9 +90,9 @@ def find_optimal_theta(pi, sigma_set, lr=1.0, dist=quick_src, iterations=None, v
     loss_array = [loss(theta)]
     ctr = 0
     while ctr < iterations and loss_array[-1] < -1e-5:
+        lr_ = lr
         if verbose:
             print(ctr, loss_array[-1])
-        lr_ = lr
         elif loss_array[-1] < -10.:
             lr_ = 0.00004
         elif loss_array[-1] < -1.:
