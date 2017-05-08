@@ -87,12 +87,17 @@ def avg_distance(v1s, v2s, dist_metric = spearman_rank_correlation):
 			ct += 1. 
 	return dist / ct
 
+def run_election(votes): 
+	center = Election(votes=votes, num_clusters=1).cluster_centers
+	return center[0]
+
 
 if __name__ == '__main__': 
 	# generate 100 random samples, twice 
-	TOTAL_SAMPLE = 1700
+	TOTAL_SAMPLE = 100
 	v1 = random_sample(10, TOTAL_SAMPLE)
 	v2 = random_sample(10, TOTAL_SAMPLE)
+	v3 = random_sample(10, TOTAL_SAMPLE)
 	# average distance between 100 randomly generated samples
 	# average distance between randomly generated samples and SUSHI
 	votes, _ = read_sushi_votes(same=True)
@@ -101,17 +106,31 @@ if __name__ == '__main__':
 	pi2, theta2, sigma2, loss2 = read_cps_file('[7 2 1 8 5 6 4 0 3 9]3.txt')
 	pi3, theta3, sigma3, loss3 = read_cps_file('[8 6 5 0 3 9 2 7 4 1]3.txt')
 	total = len(sigma1) + len(sigma2) + len(sigma3)
-	print total
 	proportion = lambda s: int((float(len(s)) / total) * TOTAL_SAMPLE)
-	print proportion(sigma1)
-	print proportion(sigma2)
-	print proportion(sigma3)
+
 	s1 = cps_approx_sample(pi1, theta1, sigma1, proportion(sigma1))
 	s2 = cps_approx_sample(pi2, theta2, sigma2, proportion(sigma2))
 	s3 = cps_approx_sample(pi3, theta3, sigma3, proportion(sigma3))
-	cps_votes = s1 + s2 + s3
-	print "RANDOM AND SUSHI: %s" % avg_distance(v1, votes)
-	print "RANDOM AND RANDOM: %s" % avg_distance(v1,v2)
-	print "CPS AND RANDOM: %s" % avg_distance(cps_votes, v1)
-	print "CPS AND SUSHI: %s" % avg_distance(cps_votes, votes)
+
+	v1 = run_election(np.array(v1))
+	v2 = run_election(np.array(v2))
+	v3 = run_election(np.array(v3))
+
+
+	e1 = run_election(np.array(s1))
+	e2 = run_election(np.array(s2))
+	e3 = run_election(np.array(s3))
+	dist = spearman_rank_correlation
+
+	print "RANDOM CLUSTER 1: %s" % dist(v1, pi1)
+	print "RANDOM CLUSTER 2: %s" % dist(v2, pi2)
+	print "RANDOM CLUSTER 3: %s" % dist(v3, pi3)
+	print "CPS CLUSTER 1: %s" % dist(e1, pi1)
+	print "CPS CLUSTER 2: %s" % dist(e2, pi2)
+	print "CPS CLUSTER 3: %s" % dist(e3, pi3)
+	# cps_votes = s1 + s2 + s3
+	# print "RANDOM AND SUSHI: %s" % avg_distance(v1, votes)
+	# print "RANDOM AND RANDOM: %s" % avg_distance(v1,v2)
+	# print "CPS AND RANDOM: %s" % avg_distance(cps_votes, v1)
+	# print "CPS AND SUSHI: %s" % avg_distance(cps_votes, votes)
 	# print avg_distance(v1, votes)
