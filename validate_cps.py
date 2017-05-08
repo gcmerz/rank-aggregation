@@ -4,6 +4,7 @@ import numpy as np
 from numpy.random import choice
 from random import sample
 from util import spearman_rank_correlation, read_sushi_votes
+import os
 
 
 def random_sample(n, n_samples): 
@@ -87,31 +88,49 @@ def avg_distance(v1s, v2s, dist_metric = spearman_rank_correlation):
 			ct += 1. 
 	return dist / ct
 
+def run_election(votes): 
+	center = Election(votes=votes, num_clusters=1).cluster_centers
+	return center[0]
+
 
 if __name__ == '__main__': 
 	# generate 100 random samples, twice 
-	TOTAL_SAMPLE = 1700
-	v1 = random_sample(10, TOTAL_SAMPLE)
-	v2 = random_sample(10, TOTAL_SAMPLE)
-	# average distance between 100 randomly generated samples
-	# average distance between randomly generated samples and SUSHI
-	votes, _ = read_sushi_votes(same=True)
-	votes = votes[:TOTAL_SAMPLE]
-	pi1, theta1, sigma1, loss1 = read_cps_file('[7 0 2 3 8 4 5 1 9 6]3.txt')
-	pi2, theta2, sigma2, loss2 = read_cps_file('[7 2 1 8 5 6 4 0 3 9]3.txt')
-	pi3, theta3, sigma3, loss3 = read_cps_file('[8 6 5 0 3 9 2 7 4 1]3.txt')
-	total = len(sigma1) + len(sigma2) + len(sigma3)
-	print total
-	proportion = lambda s: int((float(len(s)) / total) * TOTAL_SAMPLE)
-	print proportion(sigma1)
-	print proportion(sigma2)
-	print proportion(sigma3)
-	s1 = cps_approx_sample(pi1, theta1, sigma1, proportion(sigma1))
-	s2 = cps_approx_sample(pi2, theta2, sigma2, proportion(sigma2))
-	s3 = cps_approx_sample(pi3, theta3, sigma3, proportion(sigma3))
-	cps_votes = s1 + s2 + s3
-	print "RANDOM AND SUSHI: %s" % avg_distance(v1, votes)
-	print "RANDOM AND RANDOM: %s" % avg_distance(v1,v2)
-	print "CPS AND RANDOM: %s" % avg_distance(cps_votes, v1)
-	print "CPS AND SUSHI: %s" % avg_distance(cps_votes, votes)
+
+	# declare number of samples, distance metric, 
+	# and number of clusters we're validating
+	ns = 1000
+	dist = spearman_rank_correlation
+	num_clusters = 2 
+	num_clusters = str(num_clusters)
+
+	# read in the parameters for the CPS models
+	# we learned
+	params = []
+	total_votes = 0 
+	for filename in os.listdir('results'): 
+		if filename.endswith(num_clusters + '.txt'): 
+			p = read_cps_file('results/' + filename)
+			params.append(p)
+			total_votes += len(p[2])
+
+	# proprtion of votes to sample from each model 
+	proportion = lambda s, n: int((float(len(s)) / total_votes) * n)
+	cps_samples = [] 
+	random_samples = []
+	for param in params: 
+			cps_samples.append(cps_approx_sample(param[0], param[1], param[2], proportion(param[2], ns)))
+			random_samples.append(random_sample(10, proportion(param[2], ns)))
+
+	# print results
+	for i, (r1, c1, p1) in enumerate(zip(random_samples, cps_samples, params)): 
+		r1 = run_election(np.array(r1))
+		c1 = run_election(np.array(c1))
+		print "DISTANCE BETWEEN RANDOM SAMPLE AND CLUSTER %s: %s" % (i, dist(r1, p1[0]))
+		print "DISTANCE BETWEEN CPS SAMPLE AND CLUSTER %s: %s" % (i, dist(c1, p1[0]))
+
+	# cps_votes = s1 + s2 + s3
+	# print "RANDOM AND SUSHI: %s" % avg_distance(v1, votes)
+	# print "RANDOM AND RANDOM: %s" % avg_distance(v1,v2)
+	# print "CPS AND RANDOM: %s" % avg_distance(cps_votes, v1)
+	# print "CPS AND SUSHI: %s" % avg_distance(cps_votes, votes)
 	# print avg_distance(v1, votes)
