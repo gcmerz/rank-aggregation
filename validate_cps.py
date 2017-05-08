@@ -90,11 +90,10 @@ def avg_distance(v1s, v2s, dist_metric = spearman_rank_correlation):
 
 if __name__ == '__main__': 
 	# generate 100 random samples, twice 
-	TOTAL_SAMPLE = 1000
+	TOTAL_SAMPLE = 1700
 	v1 = random_sample(10, TOTAL_SAMPLE)
 	v2 = random_sample(10, TOTAL_SAMPLE)
 	# average distance between 100 randomly generated samples
-	print avg_distance(v1, v2)
 	# average distance between randomly generated samples and SUSHI
 	votes, _ = read_sushi_votes(same=True)
 	votes = votes[:TOTAL_SAMPLE]
