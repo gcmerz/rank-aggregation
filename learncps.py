@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import print_function
 import numpy as np
 from election import Election
 import time
@@ -17,7 +18,7 @@ def quick_kendalltau(k, l, pi, sigma):
     '''
     n = len(pi)
     sigma = list(sigma)
-    count = .25 * (n - l) *(n - l - 1)
+    count = .25 * (n - l) * (n - l - 1)
     for i in xrange(k): 
         for j in xrange(i+1, n): 
             count += int(sigma.index(pi[i]) > sigma.index(pi[j]))
@@ -45,7 +46,7 @@ def quick_src(k, l, pi, sigma):
             temporary_count += (sigma.index(pi[i]) - j) ** 2
     return count + (1. / float(n - k)) * temporary_count
 
-def find_optimal_theta(pi, sigma_set, lr=1.0, dist=quick_src, iterations=1000, verbose=False): 
+def find_optimal_theta(pi, sigma_set, lr=1.0, dist=quick_src, iterations=None, verbose=False): 
     '''
         function: find_optimal_theta
             given a target permutation and a set of votes, uses MLE / gradient ascent to 
@@ -90,9 +91,11 @@ def find_optimal_theta(pi, sigma_set, lr=1.0, dist=quick_src, iterations=1000, v
     ctr = 0
     while ctr < iterations and loss_array[-1] < -1e-5:
         if verbose:
-            print ctr, loss_array[-1]
+            print(ctr, loss_array[-1])
         lr_ = lr
-        if loss_array[-1] < -0.1:
+        if loss_array[-1] < -1.:
+            lr_ = 0.0004
+        elif loss_array[-1] < -0.1:
             lr_ = 0.004
         elif loss_array[-1] < -0.01:
             lr_ = 0.04
@@ -137,18 +140,17 @@ def sequential_inference(theta, sigma, elements=range(10), dist=quick_src):
     return pi
 
 if __name__ == '__main__': 
-    votes, _ = read_sushi_votes(same=True)
+    num_clusters = 3
 
     def f(x):
         pi, cluster = x
-        theta, la = find_optimal_theta(pi, cluster, lr=4., iterations=200)
-        pi_pred = sequential_inference(theta, cluster)
-        return pi, pi_pred
+        theta, la = find_optimal_theta(pi, cluster, lr=40., iterations=1000)
+        f = open(str(pi) + str(num_clusters) + '.txt', 'w')
+        print(pi, '\n', cluster, '\n', theta, '\n', la, file=f)
 
-    n = 20
-    nc = 2
+    votes, _ = read_sushi_votes(same=True)
     start = time.time()
-    E = Election(num_clusters=nc, votes=votes[:n])
-    pool = Pool(nc)
-    print pool.map(f, zip(E.cluster_centers, E.vote_clusters))
-    print time.time() - start
+    E = Election(num_clusters=num_clusters, votes=votes[:100])
+    pool = Pool(num_clusters)
+    pool.map(f, zip(E.cluster_centers, E.vote_clusters))
+    print(time.time() - start)
