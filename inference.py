@@ -1,7 +1,7 @@
 from learncps import sequential_inference, community_sequential_inference
 from util import spearman_rank_correlation
-from metrics import borda
-from comparison import convert_votes
+from metrics import borda, minimax, instantrunoff
+from comparison import convert_votes, convert_to_sushi
 import numpy as np
 
 def check_inference():
@@ -25,28 +25,50 @@ def check_inference():
 
 	inf1 = sequential_inference(thetas[0], sigmas[0], elements=range(10))
 	inf2 = sequential_inference(thetas[1], sigmas[1], elements=range(10))
+	
+	# our algorithm
 	comm = community_sequential_inference(thetas, sigmas, elements=range(10))
+
+	# other methods
+	def aggregate(f, vs, cs):
+		return [int(list(el)[0]) for el in f(vs, cs)]
 	vs, cs = convert_votes(sigmas[0] + sigmas[1])
-	b = [int(list(el)[0]) for el in borda(vs, cs)]
-	print "Community: ", comm
-	print "Borda: ", b
-	print len(sigmas[0]), inf1, "d to c: ", spearman_rank_correlation(inf1, comm), "d to b: ", spearman_rank_correlation(inf1, b)
-	print len(sigmas[1]), inf2, "d to c: ", spearman_rank_correlation(inf2, comm), "d to b: ", spearman_rank_correlation(inf2, b)
+	b = aggregate(borda, vs, cs)
+	simpson = aggregate(minimax, vs, cs)
+	ir = aggregate(instantrunoff, vs, cs)
+	ir.append(9)
+
+	print "Community: ", convert_to_sushi(comm)
+	print "Borda: ", convert_to_sushi(b)
+	print "Simpson: ", convert_to_sushi(simpson)
+	print "Instant Runoff: ", convert_to_sushi(ir)
+	print "----"
+	print len(sigmas[0]), convert_to_sushi(inf1), "d to c: ", spearman_rank_correlation(inf1, comm), "d to b: ", spearman_rank_correlation(inf1, b)
+	print len(sigmas[1]), convert_to_sushi(inf2), "d to c: ", spearman_rank_correlation(inf2, comm), "d to b: ", spearman_rank_correlation(inf2, b)
+	print "----"
 
 	def average_dist(votes):
 		b_d = []
+		s_d = []
+		i_d = []
 		c_d = []
 		for vote in votes:
 			b_d.append(spearman_rank_correlation(vote, b))
+			s_d.append(spearman_rank_correlation(vote, simpson))
+			i_d.append(spearman_rank_correlation(vote, ir))
 			c_d.append(spearman_rank_correlation(vote, comm))
 		print "Borda: ", np.average(b_d)
+		print "Simpson: ", np.average(s_d)
+		print "Instant Runoff: ", np.average(i_d)
 		print "Community: ", np.average(c_d)	
 
 	print "Average distance to all voters"
 	average_dist(sigmas[0] + sigmas[1])
+	print "----"
 
 	print "Average distance to voters c1"
 	average_dist(sigmas[0])
+	print "----"
 
 	print "Average distance to voters c2"
 	average_dist(sigmas[1])
