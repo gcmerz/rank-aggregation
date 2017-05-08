@@ -93,8 +93,10 @@ def find_optimal_theta(pi, sigma_set, lr=1.0, dist=quick_src, iterations=None, v
         if verbose:
             print(ctr, loss_array[-1])
         lr_ = lr
-        if loss_array[-1] < -1.:
-            lr_ = 0.0004
+        elif loss_array[-1] < -10.:
+            lr_ = 0.00004
+        elif loss_array[-1] < -1.:
+            lr_ = 0.0001
         elif loss_array[-1] < -0.1:
             lr_ = 0.004
         elif loss_array[-1] < -0.01:
@@ -140,7 +142,7 @@ def sequential_inference(theta, sigma, elements=range(10), dist=quick_src):
     return pi
 
 if __name__ == '__main__': 
-    num_clusters = 3
+    num_clusters = 2
 
     def f(x):
         pi, cluster = x
@@ -150,7 +152,7 @@ if __name__ == '__main__':
 
     votes, _ = read_sushi_votes(same=True)
     start = time.time()
-    E = Election(num_clusters=num_clusters, votes=votes[:100])
+    E = Election(num_clusters=num_clusters, votes=votes[500:])
     pool = Pool(num_clusters)
     pool.map(f, zip(E.cluster_centers, E.vote_clusters))
     print(time.time() - start)
