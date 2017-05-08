@@ -1,6 +1,7 @@
 from util import * 
 from metrics import *
 from learncps import *
+from inference import *
 from collections import Counter
 
 
@@ -69,3 +70,5 @@ if __name__ == '__main__':
 	result, tme = time_function(instantrunoff, mvotes, cands)
 	print convert_to_sushi(result)
 	print tme
+
+	check_inference()
