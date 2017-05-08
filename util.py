@@ -50,9 +50,10 @@ def read_sushi_votes(same=False, fn='sushi3-2016/sushi3a.5000.10.order'):
 		for line in lines:
 			r_ids.append(map(int, line.split())[8])
 			same.append(map(int, line.split())[10])
-	
+
 	if same:
 		votes = [votes[i] for i in range(len(votes)) if same[i]]
-		r_ids = [r_ids[i] for i in range(len(votes)) if same[i]]
+		r_ids = [r_ids[i] for i in range(len(r_ids)) if same[i]]
 
 	return np.array(votes), np.array(r_ids)
+	
