@@ -2,6 +2,7 @@ from learncps import sequential_inference, community_sequential_inference
 from util import spearman_rank_correlation
 from metrics import borda
 from comparison import convert_votes
+import numpy as np
 
 sigmas = []
 thetas = []
@@ -30,3 +31,21 @@ print "Community: ", comm
 print "Borda: ", b
 print len(sigmas[0]), inf1, "d to c: ", spearman_rank_correlation(inf1, comm), "d to b: ", spearman_rank_correlation(inf1, b)
 print len(sigmas[1]), inf2, "d to c: ", spearman_rank_correlation(inf2, comm), "d to b: ", spearman_rank_correlation(inf2, b)
+
+def average_dist(votes):
+	b_d = []
+	c_d = []
+	for vote in votes:
+		b_d.append(spearman_rank_correlation(vote, b))
+		c_d.append(spearman_rank_correlation(vote, comm))
+	print "Borda: ", np.average(b_d)
+	print "Community: ", np.average(c_d)	
+
+print "Average distance to all voters"
+average_dist(sigmas[0] + sigmas[1])
+
+print "Average distance to voters c1"
+average_dist(sigmas[0])
+
+print "Average distance to voters c2"
+average_dist(sigmas[1])
