@@ -1,5 +1,7 @@
 from learncps import sequential_inference, community_sequential_inference
 from util import spearman_rank_correlation
+from metrics import borda
+from comparison import convert_votes
 
 sigmas = []
 thetas = []
@@ -22,6 +24,9 @@ for fn in [('results/[7 5 1 4 8 2 3 6 0 9]2.txt', (39,46)), ('results/[7 0 2 3 8
 inf1 = sequential_inference(thetas[0], sigmas[0], elements=range(10))
 inf2 = sequential_inference(thetas[1], sigmas[1], elements=range(10))
 comm = community_sequential_inference(thetas, sigmas, elements=range(10))
-print len(sigmas[0]), inf1, spearman_rank_correlation(inf1, comm)
-print len(sigmas[1]), inf2, spearman_rank_correlation(inf2, comm)
-print comm
+vs, cs = convert_votes(sigmas[0] + sigmas[1])
+b = [int(list(el)[0]) for el in borda(vs, cs)]
+print "Community: ", comm
+print "Borda: ", b
+print len(sigmas[0]), inf1, "d to c: ", spearman_rank_correlation(inf1, comm), "d to b: ", spearman_rank_correlation(inf1, b)
+print len(sigmas[1]), inf2, "d to c: ", spearman_rank_correlation(inf2, comm), "d to b: ", spearman_rank_correlation(inf2, b)
