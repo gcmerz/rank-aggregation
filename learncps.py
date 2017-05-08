@@ -167,7 +167,7 @@ def community_sequential_inference(thetas, sigmas, elements=range(10), dist=quic
         sums = np.zeros(len(D))
         for i in range(num_communities):
             M = len(thetas[i])
-            sums = sums + [sum([thetas[i][m] * dist(k, k, pi + [elt] + r(D, elt), sigmas[i][m]) for m in range(M)]) for elt in D]
+            sums = sums + np.array([sum([thetas[i][m] * dist(k, k, pi + [elt] + r(D, elt), sigmas[i][m]) for m in range(M)]) for elt in D])/float(M)
         obj = np.argmin(sums)
         pi.append(D[obj])
         D.remove(D[obj])
