@@ -174,6 +174,22 @@ def community_sequential_inference(thetas, sigmas, elements=range(10), dist=quic
         
     return pi
 
+def probability_of_ranking(ranking, sigma_set, theta, dist=quick_src):
+    M = len(sigma_set)
+
+    def expon(k, j): 
+        # helper function for exponential of coset distances, which is called often
+        return np.exp(-1. * sum([theta[m] * dist(k, j, ranking, sigma_set[m]) for m in xrange(M)]))
+
+    s = 0.0
+    n = len(ranking)
+    for i in range(n):
+        numerator = expon(i, i)
+        denominator = sum([expon(i, j) for j in range(i, n)])
+        s += np.log(numerator) - np.log(denominator)
+
+    return s
+
 if __name__ == '__main__': 
     num_clusters = 2
 

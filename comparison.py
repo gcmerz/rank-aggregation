@@ -71,4 +71,6 @@ if __name__ == '__main__':
 	print convert_to_sushi(result)
 	print tme
 
+	print('\n\n\n')
+
 	check_inference()

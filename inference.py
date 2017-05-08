@@ -1,4 +1,4 @@
-from learncps import sequential_inference, community_sequential_inference
+from learncps import sequential_inference, community_sequential_inference, probability_of_ranking
 from util import spearman_rank_correlation
 from metrics import borda, minimax, instantrunoff
 from comparison import convert_votes, convert_to_sushi
@@ -43,8 +43,8 @@ def check_inference():
 	print "Simpson: ", convert_to_sushi(simpson)
 	print "Instant Runoff: ", convert_to_sushi(ir)
 	print "----"
-	print len(sigmas[0]), convert_to_sushi(inf1), "d to c: ", spearman_rank_correlation(inf1, comm), "d to b: ", spearman_rank_correlation(inf1, b)
-	print len(sigmas[1]), convert_to_sushi(inf2), "d to c: ", spearman_rank_correlation(inf2, comm), "d to b: ", spearman_rank_correlation(inf2, b)
+	print len(sigmas[0]), (inf1), "d to c: ", spearman_rank_correlation(inf1, comm), "d to b: ", spearman_rank_correlation(inf1, b)
+	print len(sigmas[1]), (inf2), "d to c: ", spearman_rank_correlation(inf2, comm), "d to b: ", spearman_rank_correlation(inf2, b)
 	print "----"
 
 	def average_dist(votes):
@@ -60,7 +60,13 @@ def check_inference():
 		print "Borda: ", np.average(b_d)
 		print "Simpson: ", np.average(s_d)
 		print "Instant Runoff: ", np.average(i_d)
-		print "Community: ", np.average(c_d)	
+		print "Community: ", np.average(c_d)
+
+	def prob(sigma, theta):
+		print probability_of_ranking(b, sigma, theta)
+		print probability_of_ranking(simpson, sigma, theta)
+		print probability_of_ranking(ir, sigma, theta)
+		print probability_of_ranking(comm, sigma, theta)
 
 	print "Average distance to all voters"
 	average_dist(sigmas[0] + sigmas[1])
@@ -68,7 +74,10 @@ def check_inference():
 
 	print "Average distance to voters c1"
 	average_dist(sigmas[0])
+	prob(sigmas[0], thetas[0])
 	print "----"
 
 	print "Average distance to voters c2"
 	average_dist(sigmas[1])
+	prob(sigmas[1], thetas[1])
+
