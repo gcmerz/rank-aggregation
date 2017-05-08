@@ -140,17 +140,17 @@ def sequential_inference(theta, sigma, elements=range(10), dist=quick_src):
     return pi
 
 if __name__ == '__main__': 
-    num_clusters = 3
+    num_clusters = 2
 
     def f(x):
         pi, cluster = x
-        theta, la = find_optimal_theta(pi, cluster, lr=40., iterations=1000)
+        theta, la = find_optimal_theta(pi, cluster, lr=40., iterations=1000, verbose = True)
         f = open(str(pi) + str(num_clusters) + '.txt', 'w')
         print(pi, '\n', cluster, '\n', theta, '\n', la, file=f)
 
     votes, _ = read_sushi_votes(same=True)
     start = time.time()
-    E = Election(num_clusters=num_clusters, votes=votes[:100])
+    E = Election(num_clusters=num_clusters, votes=votes[:500])
     pool = Pool(num_clusters)
     pool.map(f, zip(E.cluster_centers, E.vote_clusters))
     print(time.time() - start)
