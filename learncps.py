@@ -90,13 +90,13 @@ def find_optimal_theta(pi, sigma_set, lr=1.0, dist=quick_src, iterations=None, v
     loss_array = [loss(theta)]
     ctr = 0
     while ctr < iterations and loss_array[-1] < -1e-5:
-        lr_ = lr
         if verbose:
             print(ctr, loss_array[-1])
-        elif loss_array[-1] < -10.:
+        lr_ = lr
+        if loss_array[-1] < -10.:
             lr_ = 0.00004
         elif loss_array[-1] < -1.:
-            lr_ = 0.0001
+            lr_ = 0.001
         elif loss_array[-1] < -0.1:
             lr_ = 0.004
         elif loss_array[-1] < -0.01:
@@ -141,18 +141,66 @@ def sequential_inference(theta, sigma, elements=range(10), dist=quick_src):
         
     return pi
 
-if __name__ == '__main__': 
-    num_clusters = 2
+def community_sequential_inference(thetas, sigmas, elements=range(10), dist=quick_src): 
+    '''
+        function: community_sequential_inference 
+            given dispersion parameters thetas for sets of votes sigmas from different communities, 
+            infer a single ranking for all communities in the population
+        params: thetas: float list of dispersion parameters of len(sigmas[i])
+                sigma: np.arrays of np.arrays of permutations 1--n
+                elements: number of elements in the rankings (just in case rankings are weirdly
+                    formatted)
+                dist: the distance metric to use
+        returns: pi, a list of integers that is a permutation of 1--(len(sigma[0]) - 1)
+    '''
+    pi = []
+    n = len(elements)
+    num_communities = len(thetas)
+    D = elements
 
-    def f(x):
-        pi, cluster = x
-        theta, la = find_optimal_theta(pi, cluster, lr=40., iterations=1000, verbose = True)
-        f = open(str(pi) + str(num_clusters) + '.txt', 'w')
-        print(pi, '\n', cluster, '\n', theta, '\n', la, file=f)
+    def r(l, e):
+        temp = l[:]
+        temp.remove(e)
+        return temp
+
+    for k in range(n):
+        sums = np.zeros(len(D))
+        for i in range(num_communities):
+            M = len(thetas[i])
+            sums = sums + [sum([thetas[i][m] * dist(k, k, pi + [elt] + r(D, elt), sigmas[i][m]) for m in range(M)]) for elt in D]
+        obj = np.argmin(sums)
+        pi.append(D[obj])
+        D.remove(D[obj])
+        
+    return pi
+
+if __name__ == '__main__': 
+    # num_clusters = 2
+
+    # def f(x):
+    #     pi, cluster = x
+    #     theta, la = find_optimal_theta(pi, cluster, lr=40., iterations=1000, verbose = True)
+    #     f = open(str(pi) + str(num_clusters) + '.txt', 'w')
+    #     print(pi, '\n', cluster, '\n', theta, '\n', la, file=f)
+
+    # votes, _ = read_sushi_votes(same=True)
+    # start = time.time()
+    # E = Election(num_clusters=num_clusters, votes=votes[:500])
+    # pool = Pool(num_clusters)
+    # pool.map(f, zip(E.cluster_centers, E.vote_clusters))
+    # print(time.time() - start)
+    num_clusters = 2
 
     votes, _ = read_sushi_votes(same=True)
     start = time.time()
-    E = Election(num_clusters=num_clusters, votes=votes[:500])
-    pool = Pool(num_clusters)
-    pool.map(f, zip(E.cluster_centers, E.vote_clusters))
+    E = Election(num_clusters=num_clusters, votes=votes[:10])
+    thetas = []
+    sigmas = []
+    for pi, cluster in zip(E.cluster_centers, E.vote_clusters):
+        sigmas.append(cluster)
+        theta, _ = find_optimal_theta(pi, cluster, iterations=200, verbose=False)
+        thetas.append(theta)
+    print(sequential_inference(thetas[0], sigmas[0]))
+    print(sequential_inference(thetas[1], sigmas[1], elements=range(10)))
+    print(community_sequential_inference(thetas, sigmas))
     print(time.time() - start)

@@ -4,13 +4,13 @@ from util import read_sushi_votes
 
 votes, r_ids = read_sushi_votes(same=True)
 
-n = 500
+n = 100
 nc = 2
 props = []
 num = [[] for _ in range(10)]
 num_each = np.array([float((r_ids[:n] == i).sum()) for i in range(11)])
 
-E = Election(num_clusters=nc, votes=votes[:n], region_ids=r_ids[:n])
+E = Election(num_clusters=nc, votes=votes[n:], region_ids=r_ids[n:])
 for cluster in E.vote_clusters:
 	props.append(np.array([(float((cluster[1] == i).sum())/float(len(cluster[1]))) * n for i in range(11)]))
 	print len(cluster[0]), props[-1]
@@ -24,6 +24,8 @@ for cluster in E.vote_clusters:
 
 	for i in range(10):
 		num[i].append(counts[i]/float(len(cluster[1])))
+
+print E.cluster_centers
 
 # this metric only makes sense if there are two clusters
 if nc == 2:
