@@ -5,8 +5,6 @@ from election import Election
 import time
 from multiprocessing import Pool
 from util import read_sushi_votes
-# import matplotlib.pyplot as plt
-
 
 def quick_kendalltau(k, l, pi, sigma): 
     ''' 
@@ -174,7 +172,8 @@ def community_sequential_inference(thetas, sigmas, elements=range(10), dist=quic
             sums += probs[i]
         obj = np.argmin(sums)
         pi.append(D[obj])
-        D.remove(D[obj])        
+        D.remove(D[obj])  
+
     return pi
 
 def probability_of_ranking(ranking, sigma_set, theta, dist=quick_src):
@@ -194,7 +193,7 @@ def probability_of_ranking(ranking, sigma_set, theta, dist=quick_src):
     return s
 
 if __name__ == '__main__': 
-    num_clusters = 2
+    num_clusters = 3
 
     def f(x):
         pi, cluster = x
@@ -204,7 +203,7 @@ if __name__ == '__main__':
 
     votes, _ = read_sushi_votes(same=True)
     start = time.time()
-    E = Election(num_clusters=num_clusters, votes=votes[:500])
+    E = Election(num_clusters=num_clusters, votes=votes[200:350])
     pool = Pool(num_clusters)
     pool.map(f, zip(E.cluster_centers, E.vote_clusters))
     print(time.time() - start)

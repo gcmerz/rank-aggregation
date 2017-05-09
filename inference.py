@@ -2,6 +2,7 @@ from learncps import sequential_inference, community_sequential_inference, proba
 from util import spearman_rank_correlation
 from metrics import borda, minimax, instantrunoff
 from comparison import convert_votes, convert_to_sushi
+import time
 import numpy as np
 
 def check_inference():
@@ -27,16 +28,24 @@ def check_inference():
 	inf2 = sequential_inference(thetas[1], sigmas[1], elements=range(10))
 	
 	# our algorithm
+	start = time.time()
 	comm = community_sequential_inference(thetas, sigmas, elements=range(10))
+	print "TIME", time.time() - start
 
 	# other methods
 	def aggregate(f, vs, cs):
 		return [int(list(el)[0]) for el in f(vs, cs)]
 	vs, cs = convert_votes(sigmas[0] + sigmas[1])
+	start = time.time()
 	b = aggregate(borda, vs, cs)
+	print "TIME", time.time() - start
+	start = time.time()
 	simpson = aggregate(minimax, vs, cs)
+	print "TIME", time.time() - start
+	start = time.time()
 	ir = aggregate(instantrunoff, vs, cs)
 	ir.append(9)
+	print "TIME", time.time() - start
 
 	print "Community: ", convert_to_sushi(comm)
 	print "Borda: ", convert_to_sushi(b)
@@ -68,6 +77,12 @@ def check_inference():
 		print probability_of_ranking(ir, sigma, theta)
 		print probability_of_ranking(comm, sigma, theta)
 
+	def diffs(sigmas, thetas):
+		print -1 * (probability_of_ranking(b, sigmas[0], thetas[0]) - probability_of_ranking(b, sigmas[1], thetas[1]))
+		print -1 * (probability_of_ranking(simpson, sigmas[0], thetas[0]) - probability_of_ranking(simpson, sigmas[1], thetas[1]))
+		print -1 * (probability_of_ranking(ir, sigmas[0], thetas[0]) - probability_of_ranking(ir, sigmas[1], thetas[1]))
+		print -1 * (probability_of_ranking(comm, sigmas[0], thetas[0]) - probability_of_ranking(comm, sigmas[1], thetas[1]))
+
 	print "Average distance to all voters"
 	average_dist(sigmas[0] + sigmas[1])
 	print "----"
@@ -80,4 +95,7 @@ def check_inference():
 	print "Average distance to voters c2"
 	average_dist(sigmas[1])
 	prob(sigmas[1], thetas[1])
+	print "----"
+
+	diffs(sigmas, thetas)
 
