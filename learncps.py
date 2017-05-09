@@ -165,13 +165,21 @@ def community_sequential_inference(thetas, sigmas, elements=range(10), dist=quic
 
     for k in range(n):
         sums = np.zeros(len(D))
+        probs = []
         for i in range(num_communities):
             M = len(thetas[i])
-            sums = sums + np.array([sum([thetas[i][m] * dist(k, k, pi + [elt] + r(D, elt), sigmas[i][m]) for m in range(M)]) for elt in D])
-        obj = np.argmin(sums)
-        pi.append(D[obj])
-        D.remove(D[obj])
-        
+            probs.append(np.array([sum([thetas[i][m] * dist(k, k, pi + [elt] + r(D, elt), sigmas[i][m]) for m in range(M)]) for elt in D]))
+        if len(set([np.argmin(probs[i]) for i in range(len(probs))])) <= 1:
+            obj = np.argmin(probs[0])
+            pi.append(D[obj])
+            D.remove(D[obj])
+        else:
+            sums = probs[0]
+            for i in range(1,len(probs)):
+                sums += probs[i]
+            obj = np.argmin(sums)
+            pi.append(D[obj])
+            D.remove(D[obj])        
     return pi
 
 def probability_of_ranking(ranking, sigma_set, theta, dist=quick_src):
